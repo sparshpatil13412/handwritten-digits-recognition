@@ -198,7 +198,7 @@ Record your measured results after training the model.
 | Number of test images | 10,000 |
 | Number of output classes | 10 |
 | Number of training epochs | 10 |
-| Validation accuracy | 99.62% |
+| Validation accuracy | 97.81% |
 | Test accuracy | --- |
 
 The final test accuracy depends on the architecture, training configuration, preprocessing, and random initialization.

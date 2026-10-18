@@ -69,7 +69,7 @@ display_images(val_data, "Validation")
 ##CREATING THE MODEL
 #define the neural network architecture
 train_loader = DataLoader(
-    train_dataset,
+    train_data,
     batch_size=64,
     shuffle=True
 )
