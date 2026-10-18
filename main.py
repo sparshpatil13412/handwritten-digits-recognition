@@ -74,61 +74,76 @@ train_loader = DataLoader(
     shuffle=True
 )
 
+val_loader = DataLoader(
+    val_data,
+    batch_size=64,
+    shuffle=False
+)
+
 test_loader = DataLoader(
     test_dataset,
     batch_size=64,
     shuffle=False
 )
-class DigitClassifier(nn.Module):
-    def __init__(self):
-        super().__init__()
 
-        self.network = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(28 * 28, 128),
-            nn.ReLU(),
-            nn.Linear(128, 10)
-        )
+def model_structure_training_val():
+    class DigitClassifier(nn.Module):
+        def __init__(self):
+            super().__init__()
 
-    def forward(self, x):
-        return self.network(x)
+            self.network = nn.Sequential(
+                nn.Flatten(),
+                nn.Linear(28 * 28, 196),
+                nn.ReLU(),
+                nn.Linear(196, 98),
+                nn.Sigmoid(),
+                nn.Linear(98, 49),
+                nn.Tanh(),
+                nn.Linear(49, 10)  # Output layer for 10 classes (digits 0-9)
+            )
 
-model = DigitClassifier()
+        def forward(self, x):
+            return self.network(x)
 
-loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    model = DigitClassifier()
 
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-#training the model
-epochs = 5
-for epoch in range(epochs):
-    model.train()
-    total_loss = 0
+    #training the model
+    epochs = 10
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
 
-    for images, labels in train_loader:
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss = loss_fn(outputs, labels)
-        loss.backward()
-        optimizer.step()
+        for images, labels in train_loader:
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = loss_fn(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
 
-        total_loss += loss.item()
+        avg_loss = total_loss / len(train_loader)
+        print(f"Epoch [{epoch + 1}/{epochs}], Loss: {avg_loss:.4f}")
 
-    avg_loss = total_loss / len(train_loader)
-    print(f"Epoch [{epoch + 1}/{epochs}], Loss: {avg_loss:.4f}")
+    #evaluating the model on validation dataset
+    model.eval()
+    correct = 0
+    total = 0
 
-#evaluating the model
-model.eval()
-correct = 0
-total = 0
+    with torch.no_grad():
+        for images, labels in val_loader:
+            outputs = model(images)
+            probabilities = torch.softmax(outputs, dim=1)
+            predictions = outputs.argmax(dim=1)
 
-with torch.no_grad():
-    for images, labels in test_loader:
-        outputs = model(images)
-        predictions = outputs.argmax(dim=1)
+            correct += (predictions == labels).sum().item()
+            total += labels.size(0)
 
-        correct += (predictions == labels).sum().item()
-        total += labels.size(0)
+    accuracy = 100 * correct / total
+    print(f"Accuracy on Validation Set: {accuracy:.2f}%")
 
-accuracy = 100 * correct / total
-print(f"Test Accuracy: {accuracy:.2f}%")
+    return model
+
+model = model_structure_training_val()
