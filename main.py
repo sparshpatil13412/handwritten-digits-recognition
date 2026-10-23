@@ -4,6 +4,9 @@ The model learns patterns from 60,000 training images, each measuring 28 × 28 p
 The project explores image preprocessing, neural network architecture, model training, loss optimization, and classification accuracy to demonstrate how deep learning can solve image recognition tasks.
 '''
 import torchvision
+from PIL import Image
+import pandas as pd
+from itertools import product
 import torch
 from torch import nn
 from torchvision import datasets, transforms
@@ -63,8 +66,11 @@ train_data, val_data = train_test_split(
     random_state=42
 )
 
+print("Training images after splitting:", len(train_data))
+print("Validation images after splitting:", len(val_data))
 display_images(train_data, "Training(after splitting)")
 display_images(val_data, "Validation")
+
 
 ##CREATING THE MODEL
 #define the neural network architecture
@@ -86,20 +92,27 @@ test_loader = DataLoader(
     shuffle=False
 )
 
-def model_structure_training_val():
+layer1_options = [196, 128]
+layer2_options = [98, 64]
+
+architectures = list(product(layer1_options, layer2_options))
+
+for architecture in architectures:
+    print(f"Architectures : {architecture}")
+
+# creating function to find the best architecture, learning rate and number of epochs for the model
+def model_structure_training_val_1():
     class DigitClassifier(nn.Module):
         def __init__(self):
             super().__init__()
 
             self.network = nn.Sequential(
                 nn.Flatten(),
-                nn.Linear(28 * 28, 196),
+                nn.Linear(28 * 28, architectures[i][0]), #changing the number of neurons between 196, 128 to find the best architecture for the model
                 nn.ReLU(),
-                nn.Linear(196, 98),
+                nn.Linear(architectures[i][0], architectures[i][1]),#changing the number of neurons between 98, 64 to find the best architecture for the model
                 nn.Sigmoid(),
-                nn.Linear(98, 49),
-                nn.Tanh(),
-                nn.Linear(49, 10)  # Output layer for 10 classes (digits 0-9)
+                nn.Linear(architectures[i][1], 10)  # Output layer for 10 classes (digits 0-9)
             )
 
         def forward(self, x):
@@ -108,10 +121,11 @@ def model_structure_training_val():
     model = DigitClassifier()
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    #changing learning rate between 0.01, 0.001, 0.0005, 0.0001 for training the model
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001) #0.001 was the suitable learning rate for the model as accuracy was the highest on the validation set with this learning rate
 
-    #training the model
-    epochs = 10
+    #changing learning rate between 5, 10, 15, 20, 25, 30 for training the model
+    epochs = 10 #30 was the suitable number of epochs for the model to converge and achieve good accuracy on the validation set
     for epoch in range(epochs):
         model.train()
         total_loss = 0
@@ -124,26 +138,62 @@ def model_structure_training_val():
             optimizer.step()
             total_loss += loss.item()
 
+        if epoch == range(epochs)[-1]:
+            final_epoch = epoch + 1
+
         avg_loss = total_loss / len(train_loader)
         print(f"Epoch [{epoch + 1}/{epochs}], Loss: {avg_loss:.4f}")
 
-    #evaluating the model on validation dataset
+    #evaluating the model on validation dataset on various epochs
+    
+    # Evaluate on the validation dataset
     model.eval()
     correct = 0
     total = 0
+    total_val_loss = 0.0
 
-    with torch.no_grad():
+    with torch.inference_mode():
         for images, labels in val_loader:
             outputs = model(images)
-            probabilities = torch.softmax(outputs, dim=1)
-            predictions = outputs.argmax(dim=1)
 
+            loss = loss_fn(outputs, labels)
+            total_val_loss += loss.item() * labels.size(0)
+
+            predictions = outputs.argmax(dim=1)
             correct += (predictions == labels).sum().item()
             total += labels.size(0)
 
     accuracy = 100 * correct / total
-    print(f"Accuracy on Validation Set: {accuracy:.2f}%")
+    val_loss = total_val_loss / total
 
-    return model
+    print(f"Validation Accuracy for {architectures[i][0]} → {architectures[i][1]}: {accuracy:.2f}%")
+    print(f"Validation Loss for {architectures[i][0]} → {architectures[i][1]}: {val_loss:.4f}")
 
-model = model_structure_training_val()
+    return model, accuracy, val_loss, final_epoch, avg_loss, architectures[i]
+
+#calling the function to find the best architecture, learning rate and number of epochs for the model
+accuracy_list = []
+val_loss_list = []
+final_epoch_list = []
+architectures_list = []
+training_loss_list = []
+sr_no = range(1, len(architectures) + 1)
+for i in range(len(architectures)):
+    model, accuracy, val_loss, final_epoch, avg_loss, arch = model_structure_training_val_1()
+    arch = str(arch).replace("(", "").replace(")", "").replace(",", " →")
+    accuracy_list.append(accuracy)
+    val_loss_list.append(val_loss)
+    final_epoch_list.append(final_epoch)
+    architectures_list.append(arch)
+    training_loss_list.append(avg_loss)
+
+data = {
+    'Sr No': sr_no,
+    'Architecture': architectures_list,
+    'Validation Accuracy': accuracy_list,
+    'Validation Loss': val_loss_list,
+    'Training Loss': training_loss_list,
+    'Epochs': final_epoch_list
+}
+df = pd.DataFrame(data)
+excel_sheet = df.to_excel('architecture_results.xlsx', index=False)

@@ -197,11 +197,15 @@ Record your measured results after training the model.
 | Number of validation images | 12,000 |
 | Number of test images | 10,000 |
 | Number of output classes | 10 |
-| Number of training epochs | 10 |
+| Number of training epochs | 30 |
+| Training loss | 0.0041 |
 | Validation accuracy | 97.81% |
 | Test accuracy | --- |
 
 The final test accuracy depends on the architecture, training configuration, preprocessing, and random initialization.
+Multiple tests were done to maximize the accuracy and reduce the loss of the model by hyperparameter fine tuning.
+
+*All the tests conducted for hyperparameter fine tuning of learning rate and total epochs and their results have been attached in the .xlsx document named 'testing multiple hyperparameters for better accuracy and loss'
 
 ## Key Concepts Learned
 
