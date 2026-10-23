@@ -121,11 +121,9 @@ def model_structure_training_val_1():
     model = DigitClassifier()
 
     loss_fn = nn.CrossEntropyLoss()
-    #changing learning rate between 0.01, 0.001, 0.0005, 0.0001 for training the model
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001) #0.001 was the suitable learning rate for the model as accuracy was the highest on the validation set with this learning rate
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    #changing learning rate between 5, 10, 15, 20, 25, 30 for training the model
-    epochs = 10 #30 was the suitable number of epochs for the model to converge and achieve good accuracy on the validation set
+    epochs = 10
     for epoch in range(epochs):
         model.train()
         total_loss = 0
