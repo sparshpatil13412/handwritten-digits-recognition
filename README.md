@@ -1,233 +1,218 @@
 # MNIST Handwritten Digit Recognition using PyTorch
 
-A machine learning project that uses a neural network built with PyTorch to recognize handwritten digits from the MNIST dataset. The model learns patterns from grayscale images and classifies each image into one of ten digit classes (0–9).
+A deep learning project that uses a fully connected neural network built with PyTorch to recognize handwritten digits from the MNIST dataset. The model processes grayscale images and classifies each image into one of ten digit classes.
 
 ## Overview
 
 Handwritten digit recognition is a fundamental computer vision task and a practical introduction to neural networks and deep learning.
 
-This project explores how a neural network processes image data, learns through backpropagation, updates its parameters using an optimizer, and evaluates its performance on unseen images.
+This project explores image preprocessing, neural network architecture, activation functions, backpropagation, optimization, and model evaluation. It also investigates how different architectural choices and training configurations affect classification performance.
 
 ## Features
 
 - Loads and processes the MNIST handwritten digit dataset.
-- Builds a neural network using PyTorch.
-- Uses fully connected (`Linear`) layers and ReLU, Sigmoid, Tanh activation functions.
+- Splits the training dataset into training and validation sets.
+- Implements a fully connected neural network using PyTorch.
+- Experiments with different hidden-layer sizes and activation functions.
+- Evaluates different training durations and learning rates.
 - Trains the model using backpropagation and the Adam optimizer.
 - Uses Cross-Entropy Loss for multiclass classification.
-- Evaluates predictions using test accuracy.
-- Uses Softmax to convert output logits into class probabilities when needed.
+- Evaluates performance using validation and test accuracy and loss.
+- Generates predictions and class probabilities for handwritten images.
+- Records hyperparameter experiment results in spreadsheet files.
 
 ## Dataset
 
-The project uses the **MNIST dataset**, a collection of handwritten digit images.
+The project uses the MNIST dataset, which contains grayscale images of handwritten digits.
 
-- Training set: 60,000 images
-- Test set: 10,000 images
-- Image dimensions: 28 × 28 pixels
-- Image format: Grayscale
-- Number of classes: 10 (digits 0–9)
+- Training dataset: sixty thousand images.
+- Test dataset: ten thousand images.
+- Image dimensions: twenty-eight by twenty-eight pixels.
+- Image format: grayscale.
+- Output classes: digits from zero to nine.
 
 Each image is associated with a label representing the correct digit.
 
-Dataset: [MNIST Database of Handwritten Digits](http://yann.lecun.com/exdb/mnist/)
+Dataset: [MNIST Database of Handwritten Digits](https://yann.lecun.com/exdb/mnist/)
+
+The original training dataset is split into training and validation subsets. The separate test dataset is retained for final model evaluation.
 
 ## Neural Network Architecture
 
-The model is implemented using PyTorch's `torch.nn` module.
+The final model is implemented using PyTorch's `torch.nn` module.
 
-The architecture consists of:
+The network consists of a flattening operation, two hidden fully connected layers, and an output layer.
 
-1. **Flatten:** Converts each 28 × 28 image into a vector of 784 values.
-2. **Fully connected layer:** Transforms 784 input features into 196 features.
-3. **ReLU activation:** Introduces nonlinearity.
-4. **Fully connected layer:** Transforms 196 features into 98 features.
-5. **Sigmoid activation:** Introduces another nonlinear transformation.
-6. **Fully connected layer:** Transforms 98 features into 49 features.
-7. **Tanh activation:** Processes the learned representation.
-8. **Output layer:** Produces 10 scores corresponding to digits 0–9.
+- Flatten converts each image into a vector of pixel values.
+- The first fully connected layer transforms the input features into a hidden representation.
+- ReLU introduces nonlinearity after the first hidden layer.
+- The second fully connected layer learns a more compact representation.
+- Tanh introduces nonlinearity after the second hidden layer.
+- The output layer produces raw scores for the possible digit classes.
 
 ### Architecture Flow
 
 ```text
-Input Image (28 × 28)
-        |
-      Flatten
-        |
-   Linear (784 → 196)
-        |
-       ReLU
-        |
-   Linear (196 → 98)
-        |
-     Sigmoid
-        |
-    Linear (98 → 49)
-        |
-       Tanh
-        |
-    Linear (49 → 10)
-        |
-   Output Logits
+Input Image
+    |
+  Flatten
+    |
+Fully Connected Layer
+    |
+   ReLU
+    |
+Fully Connected Layer
+    |
+   Tanh
+    |
+  Output Layer
+    |
+ Output Logits
 ```
 
-The output layer produces raw scores, called logits. The predicted digit is selected using the highest-scoring output.
+The output layer produces logits rather than probabilities. The predicted digit is selected from the class with the highest logit.
 
 ## Training Process
 
-The model is trained using the following procedure:
+The model is trained using mini-batches of images and their corresponding labels.
 
-1. Load a batch of training images and their labels.
-2. Pass the images through the neural network.
-3. Calculate the loss using `nn.CrossEntropyLoss()`.
-4. Calculate gradients using `loss.backward()`.
-5. Update the model parameters using the Adam optimizer.
-6. Repeat the process over multiple epochs.
+During training, images pass through the network to generate predictions. Cross-Entropy Loss measures the difference between the predicted scores and the correct labels. Backpropagation calculates gradients, and the Adam optimizer updates the model's trainable parameters.
 
-### Loss Function
+This process repeats across multiple training epochs to improve classification performance.
 
-Cross-Entropy Loss measures how well the model's output scores correspond to the correct digit labels.
+## Loss Function
+
+The project uses PyTorch's `CrossEntropyLoss` for multiclass classification.
 
 ```python
 loss_fn = nn.CrossEntropyLoss()
 ```
 
-The model returns raw logits during training. Softmax is not applied before Cross-Entropy Loss because the loss function handles the required log-softmax computation internally.
+The loss function operates directly on raw logits and integer class labels. An explicit Softmax operation is not required before calculating the loss.
 
-### Optimizer
+## Optimizer
 
-The Adam optimizer updates the trainable weights and biases based on the calculated gradients.
+The Adam optimizer updates the model's weights and biases using the gradients calculated during backpropagation.
 
 ```python
 optimizer = torch.optim.Adam(
     model.parameters(),
-    lr=0.001
+    lr=0.0005
 )
 ```
 
-The learning rate controls the scale of the optimizer's updates.
+The learning rate controls the magnitude of parameter updates during training.
 
 ## Prediction and Softmax
 
-For each image, the model produces ten logits, one for each possible digit.
-
-The predicted class can be obtained using:
+The network generates logits for the possible digit classes. The predicted digit is selected using the highest-scoring output.
 
 ```python
-predictions = outputs.argmax(dim=1)
+prediction = output.argmax(dim=1)
 ```
 
-When probabilities are required, Softmax can be applied to the logits:
+When class probabilities are needed, Softmax converts the logits into a probability distribution.
 
 ```python
-probabilities = torch.softmax(outputs, dim=1)
+probabilities = torch.softmax(output, dim=1)
 ```
 
-These probabilities sum to approximately 1 for each image. The largest probability corresponds to the predicted class.
+The probabilities indicate the model's relative preference for each class. They are useful for examining predictions, although a high probability does not guarantee that a prediction is correct.
 
 ## Model Evaluation
 
-The trained model is evaluated on the test dataset, which contains images not used for training.
+The model is evaluated on the validation dataset during experimentation and on the separate test dataset to assess its performance on unseen MNIST images.
 
-Test accuracy is calculated as:
+Accuracy measures the proportion of correctly classified images, while Cross-Entropy Loss measures the quality of the model's predictions.
 
-$$ \text{Accuracy} = \frac{\text{Correct Predictions}}{\text{Total Predictions}} \times 100 $$
+The model is placed in evaluation mode using `model.eval()`, and `torch.inference_mode()` disables gradient tracking during evaluation and prediction.
 
+The project also tests the trained model on separate handwritten images to investigate how well it handles inputs outside the original MNIST dataset.
 
-During evaluation, `model.eval()` switches the model to evaluation mode, while `torch.no_grad()` disables gradient tracking to reduce unnecessary computation.
+## Hyperparameter Experiments
 
-The resulting test accuracy measures how often the model correctly classifies the test images.
+The project explores several model and training configurations to understand their effects on classification performance.
+
+Experiments include:
+
+- Comparing different hidden-layer sizes.
+- Comparing ReLU, Sigmoid, and Tanh activation functions.
+- Evaluating different training durations.
+- Comparing learning rates.
+- Recording training loss, validation loss, and validation accuracy.
+
+Experiment results are stored in spreadsheet files for comparison and analysis. The selected configuration is based on the observed validation results.
 
 ## Technologies Used
 
-- **Python** — Programming language
-- **PyTorch** — Neural network implementation and training
-- **Torchvision** — Dataset and image utilities, if used in the implementation
-- **Matplotlib** — Image visualization, if used in the implementation
-- **Scikit-Learn** — Split data into training and validation
+- Python for programming and model implementation.
+- PyTorch for neural network construction, training, and inference.
+- Torchvision for loading the MNIST dataset and preprocessing images.
+- Matplotlib for visualizing images and dataset information.
+- Scikit-learn for splitting the dataset into training and validation subsets.
+- Pandas for organizing experimental results.
+- OpenPyXL for exporting experiment results to Excel spreadsheets.
 
 ## Installation and Setup
 
-### 1. Clone the repository
+Clone the repository and navigate to the project directory.
 
 ```bash
-git clone https://github.com/sparshpatil13412/handwritten-digits-recognition
+git clone https://github.com/sparshpatil13412/handwritten-digits-recognition.git
 cd handwritten-digits-recognition
 ```
 
-Replace the placeholders with your actual GitHub repository URL and folder name.
-
-### 2. Create a virtual environment (recommended)
+Create and activate a virtual environment.
 
 ```bash
 python -m venv .venv
 ```
 
-Activate it on Windows:
+On Windows:
 
 ```bash
 .venv\Scripts\activate
 ```
 
-### 3. Install dependencies
+Install the required dependencies.
 
 ```bash
-pip install -r requirements.txt
+pip install torch torchvision matplotlib scikit-learn pandas openpyxl
 ```
 
-Install only the packages required by your implementation.
-
-### 4. Run the project
-
-Run the Python script containing your dataset preparation, model definition, training loop, and evaluation code:
-
-```bash
-python main.py
-```
-
-Replace `main.py` with your actual script filename.
+Run the Python script or notebook containing the project implementation. The MNIST dataset can be downloaded automatically by the dataset-loading code.
 
 ## Results
 
-Record your measured results after training the model.
+The project evaluates the model using training loss, validation loss, validation accuracy, test loss, and test accuracy.
 
-| Metric | Result |
-|---|---|
-| Number of training images | 48,000 |
-| Number of validation images | 12,000 |
-| Number of test images | 10,000 |
-| Number of output classes | 10 |
-| Number of training epochs | 30 |
-| Training loss | 0.0041 |
-| Validation accuracy | 97.81% |
-| Test accuracy | --- |
+The experimental results are recorded in spreadsheet files to compare model configurations and training settings.
 
-The final test accuracy depends on the architecture, training configuration, preprocessing, and random initialization.
-Multiple tests were done to maximize the accuracy and reduce the loss of the model by hyperparameter fine tuning.
-
-*All the tests conducted for hyperparameter tuning of learning rate and total epochs and their results have been attached in the .xlsx document named 'testing multiple hyperparameters for better accuracy and loss'
+The final performance should be reported using the actual results produced by the final model. Predictions on individually selected handwritten images are demonstrations and should not be treated as a substitute for evaluation on the complete test dataset.
 
 ## Key Concepts Learned
 
-- Tensors and image representations
-- Neural network layers and trainable parameters
-- Forward propagation
-- Activation functions
-- Multiclass classification
-- Cross-Entropy Loss
-- Backpropagation and gradients
-- Optimization using Adam
-- Softmax and class probabilities
-- Model evaluation and generalization
+- Image preprocessing and tensor representations.
+- Neural network architecture and trainable parameters.
+- Forward propagation and backpropagation.
+- Activation functions and nonlinear transformations.
+- Multiclass classification.
+- Cross-Entropy Loss.
+- Gradient-based optimization using Adam.
+- Learning rates and training epochs.
+- Training, validation, and test datasets.
+- Model generalization and classification errors.
+- Logits, Softmax, and class probabilities.
+- Hyperparameter experimentation and performance comparison.
 
 ## Future Improvements
 
-- Visualize predictions alongside the original handwritten images.
-- Analyze misclassified digits.
-- Compare different network depths and hidden-layer sizes.
-- Experiment with learning rates, batch sizes, and training epochs.
-- Compare a fully connected neural network with a convolutional neural network (CNN).
-- Save and reload trained model weights for inference.
+- Visualize predictions alongside the corresponding handwritten images.
+- Analyze misclassified examples to understand model limitations.
+- Improve preprocessing for handwritten images from external sources.
+- Compare fully connected networks with convolutional neural networks.
+- Save and reload trained model weights for inference without retraining.
+- Evaluate additional performance metrics and generalization techniques.
 
 ## Author
 
@@ -237,4 +222,4 @@ GitHub: [sparshpatil13412](https://github.com/sparshpatil13412)
 
 ## License
 
-**MIT License**
+This project is distributed under the MIT License.
