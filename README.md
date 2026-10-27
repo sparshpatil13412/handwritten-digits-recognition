@@ -205,7 +205,7 @@ Record your measured results after training the model.
 The final test accuracy depends on the architecture, training configuration, preprocessing, and random initialization.
 Multiple tests were done to maximize the accuracy and reduce the loss of the model by hyperparameter fine tuning.
 
-*All the tests conducted for hyperparameter fine tuning of learning rate and total epochs and their results have been attached in the .xlsx document named 'testing multiple hyperparameters for better accuracy and loss'
+*All the tests conducted for hyperparameter tuning of learning rate and total epochs and their results have been attached in the .xlsx document named 'testing multiple hyperparameters for better accuracy and loss'
 
 ## Key Concepts Learned
 
