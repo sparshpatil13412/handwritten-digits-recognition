@@ -177,7 +177,7 @@ On Windows:
 Install the required dependencies.
 
 ```bash
-pip install torch torchvision matplotlib scikit-learn pandas openpyxl
+pip install -r requirements.txt
 ```
 
 Run the Python script or notebook containing the project implementation. The MNIST dataset can be downloaded automatically by the dataset-loading code.
