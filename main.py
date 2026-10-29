@@ -19,11 +19,17 @@ import os
 data_path = "./data"
 
 # Download the training dataset
+MNIST_NORMALIZE = transforms.Normalize((0.1307,), (0.3081,))#Normalizing the pixels
+train_transform = transforms.Compose([
+    transforms.ToTensor(),
+    MNIST_NORMALIZE,
+])
+
 train_dataset = datasets.MNIST(
     root=data_path,
     train=True,
     download=True,
-    transform=transforms.ToTensor()
+    transform=train_transform
 )
 
 # Download the test dataset
@@ -31,7 +37,7 @@ test_dataset = datasets.MNIST(
     root=data_path,
     train=False,
     download=True,
-    transform=transforms.ToTensor()
+    transform=train_transform
 )
 
 print("Training images:", len(train_dataset))
@@ -60,7 +66,7 @@ plt.xlabel('Number of digits', fontsize=12)
 plt.ylabel('Digits', fontsize=12)
 plt.show()
 
-plt.hist(filtered_data, bins=10)#graph to analyze the skewness
+plt.hist(filtered_data.values(), bins=10)#graph to analyze the skewness
 plt.title('Skewness of digits', fontsize=14, fontweight='bold')
 plt.xlabel('Number of digits', fontsize=12)
 plt.ylabel('Digits', fontsize=12)
@@ -86,7 +92,8 @@ display_images(train_dataset, "Training(before splitting)")
 train_data, val_data = train_test_split(
     train_dataset,
     test_size=0.2,
-    random_state=42
+    random_state=42,
+    stratify=train_dataset.targets
 )
 
 print("Training images after splitting:", len(train_data))
@@ -600,7 +607,7 @@ for epoch in range(epochs):
         loss = loss_fn(outputs, labels)
         loss.backward()
         optimizer.step()
-        total_loss += loss
+        total_loss += loss.item()
 
     avg_loss = total_loss/len(train_loader)
     print(f"Epoch [{epoch + 1}/{epochs}], Loss: {avg_loss:.4f}")
@@ -658,7 +665,8 @@ image3 = Image.open("test_image3.png").convert("L")  # Convert to grayscale
 # Resize the image to 28x28 pixels
 transform = transforms.Compose([
     transforms.Resize((28, 28)),
-    transforms.ToTensor()
+    transforms.ToTensor(),
+    MNIST_NORMALIZE
 ])
 
 image1 = transform(image1).unsqueeze(0)  # Add batch dimension
